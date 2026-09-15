@@ -8,16 +8,25 @@ export interface TmdbMovie {
     title: string;
     originalTitle: string;
     overview: string;
+
     posterPath: string | null;
+    posterUrl: string | null;
+
     backdropPath: string | null;
+    backdropUrl: string | null;
+
     releaseDate: string | null;
     runtime: number | null;
+
     status: string;
     tagline: string | null;
+
     voteAverage: number;
     voteCount: number;
     popularity: number;
+
     genres: TmdbGenre[];
+
     originalLanguage: string;
     adult: boolean;
 }

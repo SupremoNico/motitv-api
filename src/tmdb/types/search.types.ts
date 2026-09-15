@@ -5,7 +5,9 @@ export interface TmdbSearchMovie {
     originalTitle: string;
     overview: string;
     posterPath: string | null;
+    posterUrl: string | null;
     backdropPath: string | null;
+    backdropUrl: string | null;
     releaseDate: string | null;
     voteAverage: number;
 }
@@ -17,7 +19,9 @@ export interface TmdbSearchTv {
     originalName: string;
     overview: string;
     posterPath: string | null;
+    posterUrl: string | null;
     backdropPath: string | null;
+    backdropUrl: string | null;
     firstAirDate: string | null;
     voteAverage: number;
 }

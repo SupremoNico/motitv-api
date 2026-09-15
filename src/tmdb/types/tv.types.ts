@@ -9,7 +9,9 @@ export interface TmdbTv {
     originalName: string;
     overview: string;
     posterPath: string | null;
+    posterUrl: string | null;
     backdropPath: string | null;
+    backdropUrl: string | null;
     firstAirDate: string | null;
     lastAirDate: string | null;
     numberOfSeasons: number;

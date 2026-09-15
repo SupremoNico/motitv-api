@@ -37,6 +37,8 @@ import type {
   TmdbSearchResponse,
 } from './types/search.types';
 
+import { getTmdbImageUrl } from './tmdb-image';
+
 @Injectable()
 export class TmdbService {
   private readonly baseUrl = 'https://api.themoviedb.org/3';
@@ -389,18 +391,27 @@ export class TmdbService {
       originalTitle: movie.original_title,
       overview: movie.overview,
       posterPath: movie.poster_path,
+      posterUrl: getTmdbImageUrl(
+        movie.poster_path,
+        'w500',
+      ),
       backdropPath: movie.backdrop_path,
-      releaseDate:
-        movie.release_date || null,
+      backdropUrl: getTmdbImageUrl(
+        movie.backdrop_path,
+        'w1280',
+      ),
+      releaseDate: movie.release_date || null,
       runtime: movie.runtime,
       status: movie.status,
       tagline: movie.tagline,
       voteAverage: movie.vote_average,
       voteCount: movie.vote_count,
       popularity: movie.popularity,
-      genres: movie.genres,
-      originalLanguage:
-        movie.original_language,
+      genres: movie.genres.map((genre) => ({
+        id: genre.id,
+        name: genre.name,
+      })),
+      originalLanguage: movie.original_language,
       adult: movie.adult,
     };
   }
@@ -427,25 +438,30 @@ export class TmdbService {
       originalName: tv.original_name,
       overview: tv.overview,
       posterPath: tv.poster_path,
+      posterUrl: getTmdbImageUrl(
+        tv.poster_path,
+        'w500',
+      ),
       backdropPath: tv.backdrop_path,
-      firstAirDate:
-        tv.first_air_date || null,
-      lastAirDate:
-        tv.last_air_date || null,
-      numberOfSeasons:
-        tv.number_of_seasons,
-      numberOfEpisodes:
-        tv.number_of_episodes,
+      backdropUrl: getTmdbImageUrl(
+        tv.backdrop_path,
+        'w1280',
+      ),
+      firstAirDate: tv.first_air_date || null,
+      lastAirDate: tv.last_air_date || null,
+      numberOfSeasons: tv.number_of_seasons,
+      numberOfEpisodes: tv.number_of_episodes,
       status: tv.status,
       tagline: tv.tagline,
       voteAverage: tv.vote_average,
       voteCount: tv.vote_count,
       popularity: tv.popularity,
-      genres: tv.genres,
-      originalLanguage:
-        tv.original_language,
-      episodeRunTime:
-        tv.episode_run_time,
+      genres: tv.genres.map((genre) => ({
+        id: genre.id,
+        name: genre.name,
+      })),
+      originalLanguage: tv.original_language,
+      episodeRunTime: tv.episode_run_time,
     };
   }
 
@@ -557,8 +573,18 @@ export class TmdbService {
                 result.overview,
               posterPath:
                 result.poster_path,
+              posterUrl:
+                getTmdbImageUrl(
+                  result.poster_path,
+                  'w500',
+                ),
               backdropPath:
                 result.backdrop_path,
+              backdropUrl:
+                getTmdbImageUrl(
+                  result.backdrop_path,
+                  'w1280',
+                ),
               releaseDate:
                 result.release_date,
               voteAverage:
@@ -580,8 +606,18 @@ export class TmdbService {
                 result.overview,
               posterPath:
                 result.poster_path,
+              posterUrl:
+                getTmdbImageUrl(
+                  result.poster_path,
+                  'w500',
+                ),
               backdropPath:
                 result.backdrop_path,
+              backdropUrl:
+                getTmdbImageUrl(
+                  result.backdrop_path,
+                  'w1280',
+                ),
               firstAirDate:
                 result.first_air_date,
               voteAverage:
