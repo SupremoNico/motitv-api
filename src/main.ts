@@ -8,14 +8,17 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    credentials: true,
   });
 
   const port = process.env.PORT ?? 4000;
 
   await app.listen(port);
 
-  console.log(`MotiTV API running on http://localhost:${port}/api`);
+  console.log(
+    `MotiTV API running on http://localhost:${port}/api`,
+  );
 }
 
 bootstrap();

@@ -8,7 +8,21 @@ export class SeriesService {
         private readonly tmdbService: TmdbService,
     ) { }
 
-    async getSeries(id: number) {
+    async getSeries(
+        page = 1,
+        genreId?: number,
+    ) {
+        return this.tmdbService.getTvList(
+            page,
+            genreId,
+        );
+    }
+
+    async getGenres() {
+        return this.tmdbService.getTvGenres();
+    }
+
+    async getSeriesById(id: number) {
         return this.tmdbService.getTv(id);
     }
 
@@ -31,11 +45,15 @@ export class SeriesService {
     }
 
     async getPopular(page = 1) {
-        return this.tmdbService.getPopularTv(page);
+        return this.tmdbService.getPopularTv(
+            page,
+        );
     }
 
     async getTopRated(page = 1) {
-        return this.tmdbService.getTopRatedTv(page);
+        return this.tmdbService.getTopRatedTv(
+            page,
+        );
     }
 
     async getSeason(

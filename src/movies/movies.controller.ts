@@ -14,6 +14,22 @@ export class MoviesController {
         private readonly moviesService: MoviesService,
     ) { }
 
+    @Get()
+    getMovies(
+        @Query('page') page?: string,
+        @Query('genre') genre?: string,
+    ) {
+        return this.moviesService.getMovies(
+            this.parsePage(page),
+            this.parseGenre(genre),
+        );
+    }
+
+    @Get('genres')
+    getGenres() {
+        return this.moviesService.getGenres();
+    }
+
     @Get('popular')
     getPopular(@Query('page') page?: string) {
         return this.moviesService.getPopular(
@@ -79,6 +95,20 @@ export class MoviesController {
 
         if (!Number.isInteger(parsed) || parsed < 1) {
             return 1;
+        }
+
+        return parsed;
+    }
+
+    private parseGenre(genre?: string): number | undefined {
+        if (!genre) {
+            return undefined;
+        }
+
+        const parsed = Number(genre);
+
+        if (!Number.isInteger(parsed) || parsed < 1) {
+            return undefined;
         }
 
         return parsed;

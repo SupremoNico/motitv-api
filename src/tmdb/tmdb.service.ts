@@ -10,16 +10,20 @@ import { ConfigService } from '@nestjs/config';
 import type {
   TmdbApiCredits,
   TmdbApiEpisode,
+  TmdbApiGenreList,
   TmdbApiMovie,
   TmdbApiMovieList,
+  TmdbApiMovieListItem,
   TmdbApiSeason,
   TmdbApiSearchResponse,
   TmdbApiTv,
   TmdbApiTvList,
+  TmdbApiTvListItem,
   TmdbApiVideos,
 } from './types/tmdb-api.types';
 
 import type {
+  TmdbGenreList,
   TmdbMovie,
   TmdbMovieCredits,
   TmdbMovieList,
@@ -41,7 +45,49 @@ import { getTmdbImageUrl } from './tmdb-image';
 
 @Injectable()
 export class TmdbService {
-  private readonly baseUrl = 'https://api.themoviedb.org/3';
+  private readonly baseUrl =
+    'https://api.themoviedb.org/3';
+
+  private readonly movieGenres: Record<number, string> = {
+    28: 'Action',
+    12: 'Adventure',
+    16: 'Animation',
+    35: 'Comedy',
+    80: 'Crime',
+    99: 'Documentary',
+    18: 'Drama',
+    10751: 'Family',
+    14: 'Fantasy',
+    36: 'History',
+    27: 'Horror',
+    10402: 'Music',
+    9648: 'Mystery',
+    10749: 'Romance',
+    878: 'Science Fiction',
+    10770: 'TV Movie',
+    53: 'Thriller',
+    10752: 'War',
+    37: 'Western',
+  };
+
+  private readonly tvGenres: Record<number, string> = {
+    10759: 'Action & Adventure',
+    16: 'Animation',
+    35: 'Comedy',
+    80: 'Crime',
+    99: 'Documentary',
+    18: 'Drama',
+    10751: 'Family',
+    10762: 'Kids',
+    9648: 'Mystery',
+    10763: 'News',
+    10764: 'Reality',
+    10765: 'Sci-Fi & Fantasy',
+    10766: 'Soap',
+    10767: 'Talk',
+    10768: 'War & Politics',
+    37: 'Western',
+  };
 
   constructor(
     private readonly configService: ConfigService,
@@ -51,7 +97,30 @@ export class TmdbService {
   // Movies
   // -----------------------------------------
 
-  async getMovie(id: number): Promise<TmdbMovie> {
+  async getMovies(
+    page = 1,
+    genreId?: number,
+  ): Promise<TmdbMovieList> {
+    const params = new URLSearchParams({
+      language: 'en-US',
+      page: String(page),
+    });
+
+    if (genreId) {
+      params.set('with_genres', String(genreId));
+    }
+
+    const response =
+      await this.request<TmdbApiMovieList>(
+        `/discover/movie?${params.toString()}`,
+      );
+
+    return this.mapMovieList(response);
+  }
+
+  async getMovie(
+    id: number,
+  ): Promise<TmdbMovie> {
     const movie =
       await this.request<TmdbApiMovie>(
         `/movie/${id}?language=en-US`,
@@ -164,10 +233,30 @@ export class TmdbService {
   }
 
   // -----------------------------------------
+  // Movie Genres
+  // -----------------------------------------
+
+  async getMovieGenres(): Promise<TmdbGenreList> {
+    const response =
+      await this.request<TmdbApiGenreList>(
+        '/genre/movie/list?language=en-US',
+      );
+
+    return {
+      genres: response.genres.map((genre) => ({
+        id: genre.id,
+        name: genre.name,
+      })),
+    };
+  }
+
+  // -----------------------------------------
   // TV / Series
   // -----------------------------------------
 
-  async getTv(id: number): Promise<TmdbTv> {
+  async getTv(
+    id: number,
+  ): Promise<TmdbTv> {
     const tv =
       await this.request<TmdbApiTv>(
         `/tv/${id}?language=en-US`,
@@ -247,6 +336,30 @@ export class TmdbService {
     return this.mapTvList(response);
   }
 
+  async getTvList(
+    page = 1,
+    genreId?: number,
+  ): Promise<TmdbTvList> {
+    const params = new URLSearchParams({
+      language: 'en-US',
+      page: String(page),
+    });
+
+    if (genreId) {
+      params.set(
+        'with_genres',
+        String(genreId),
+      );
+    }
+
+    const response =
+      await this.request<TmdbApiTvList>(
+        `/discover/tv?${params.toString()}`,
+      );
+
+    return this.mapTvList(response);
+  }
+
   async getTvSeason(
     tvId: number,
     seasonNumber: number,
@@ -270,6 +383,24 @@ export class TmdbService {
       );
 
     return this.mapEpisode(episode);
+  }
+
+  // -----------------------------------------
+  // TV Genres
+  // -----------------------------------------
+
+  async getTvGenres(): Promise<TmdbGenreList> {
+    const response =
+      await this.request<TmdbApiGenreList>(
+        '/genre/tv/list?language=en-US',
+      );
+
+    return {
+      genres: response.genres.map((genre) => ({
+        id: genre.id,
+        name: genre.name,
+      })),
+    };
   }
 
   // -----------------------------------------
@@ -390,28 +521,38 @@ export class TmdbService {
       title: movie.title,
       originalTitle: movie.original_title,
       overview: movie.overview,
+
       posterPath: movie.poster_path,
       posterUrl: getTmdbImageUrl(
         movie.poster_path,
         'w500',
       ),
+
       backdropPath: movie.backdrop_path,
       backdropUrl: getTmdbImageUrl(
         movie.backdrop_path,
         'w1280',
       ),
-      releaseDate: movie.release_date || null,
+
+      releaseDate:
+        movie.release_date || null,
+
       runtime: movie.runtime,
       status: movie.status,
       tagline: movie.tagline,
+
       voteAverage: movie.vote_average,
       voteCount: movie.vote_count,
       popularity: movie.popularity,
+
       genres: movie.genres.map((genre) => ({
         id: genre.id,
         name: genre.name,
       })),
-      originalLanguage: movie.original_language,
+
+      originalLanguage:
+        movie.original_language,
+
       adult: movie.adult,
     };
   }
@@ -421,11 +562,63 @@ export class TmdbService {
   ): TmdbMovieList {
     return {
       page: response.page,
+
       results: response.results.map(
-        (movie) => this.mapMovie(movie),
+        (movie) =>
+          this.mapMovieListItem(movie),
       ),
-      totalPages: response.total_pages,
-      totalResults: response.total_results,
+
+      totalPages:
+        response.total_pages,
+
+      totalResults:
+        response.total_results,
+    };
+  }
+
+  private mapMovieListItem(
+    movie: TmdbApiMovieListItem,
+  ): TmdbMovie {
+    return {
+      id: movie.id,
+      title: movie.title,
+      originalTitle: movie.original_title,
+      overview: movie.overview,
+
+      posterPath: movie.poster_path,
+      posterUrl: getTmdbImageUrl(
+        movie.poster_path,
+        'w500',
+      ),
+
+      backdropPath: movie.backdrop_path,
+      backdropUrl: getTmdbImageUrl(
+        movie.backdrop_path,
+        'w1280',
+      ),
+
+      releaseDate:
+        movie.release_date || null,
+
+      runtime: null,
+      status: '',
+      tagline: null,
+
+      voteAverage: movie.vote_average,
+      voteCount: movie.vote_count,
+      popularity: movie.popularity,
+
+      genres: movie.genre_ids.map((id) => ({
+        id,
+        name:
+          this.movieGenres[id] ??
+          'Unknown',
+      })),
+
+      originalLanguage:
+        movie.original_language,
+
+      adult: movie.adult,
     };
   }
 
@@ -437,31 +630,48 @@ export class TmdbService {
       name: tv.name,
       originalName: tv.original_name,
       overview: tv.overview,
+
       posterPath: tv.poster_path,
       posterUrl: getTmdbImageUrl(
         tv.poster_path,
         'w500',
       ),
+
       backdropPath: tv.backdrop_path,
       backdropUrl: getTmdbImageUrl(
         tv.backdrop_path,
         'w1280',
       ),
-      firstAirDate: tv.first_air_date || null,
-      lastAirDate: tv.last_air_date || null,
-      numberOfSeasons: tv.number_of_seasons,
-      numberOfEpisodes: tv.number_of_episodes,
+
+      firstAirDate:
+        tv.first_air_date || null,
+
+      lastAirDate:
+        tv.last_air_date || null,
+
+      numberOfSeasons:
+        tv.number_of_seasons,
+
+      numberOfEpisodes:
+        tv.number_of_episodes,
+
       status: tv.status,
       tagline: tv.tagline,
+
       voteAverage: tv.vote_average,
       voteCount: tv.vote_count,
       popularity: tv.popularity,
+
       genres: tv.genres.map((genre) => ({
         id: genre.id,
         name: genre.name,
       })),
-      originalLanguage: tv.original_language,
-      episodeRunTime: tv.episode_run_time,
+
+      originalLanguage:
+        tv.original_language,
+
+      episodeRunTime:
+        tv.episode_run_time,
     };
   }
 
@@ -470,11 +680,67 @@ export class TmdbService {
   ): TmdbTvList {
     return {
       page: response.page,
+
       results: response.results.map(
-        (tv) => this.mapTv(tv),
+        (tv) =>
+          this.mapTvListItem(tv),
       ),
-      totalPages: response.total_pages,
-      totalResults: response.total_results,
+
+      totalPages:
+        response.total_pages,
+
+      totalResults:
+        response.total_results,
+    };
+  }
+
+  private mapTvListItem(
+    tv: TmdbApiTvListItem,
+  ): TmdbTv {
+    return {
+      id: tv.id,
+      name: tv.name,
+      originalName: tv.original_name,
+      overview: tv.overview,
+
+      posterPath: tv.poster_path,
+      posterUrl: getTmdbImageUrl(
+        tv.poster_path,
+        'w500',
+      ),
+
+      backdropPath: tv.backdrop_path,
+      backdropUrl: getTmdbImageUrl(
+        tv.backdrop_path,
+        'w1280',
+      ),
+
+      firstAirDate:
+        tv.first_air_date || null,
+
+      lastAirDate: null,
+
+      numberOfSeasons: 0,
+      numberOfEpisodes: 0,
+
+      status: '',
+      tagline: null,
+
+      voteAverage: tv.vote_average,
+      voteCount: tv.vote_count,
+      popularity: tv.popularity,
+
+      genres: tv.genre_ids.map((id) => ({
+        id,
+        name:
+          this.tvGenres[id] ??
+          'Unknown',
+      })),
+
+      originalLanguage:
+        tv.original_language,
+
+      episodeRunTime: [],
     };
   }
 
@@ -488,6 +754,7 @@ export class TmdbService {
         character: person.character,
         profilePath: person.profile_path,
       })),
+
       crew: credits.crew.map((person) => ({
         id: person.id,
         name: person.name,
@@ -520,11 +787,16 @@ export class TmdbService {
       id: season.id,
       name: season.name,
       overview: season.overview,
+
       seasonNumber:
         season.season_number,
+
       episodeCount:
         season.episode_count,
-      airDate: season.air_date,
+
+      airDate:
+        season.air_date,
+
       posterPath:
         season.poster_path,
     };
@@ -537,16 +809,25 @@ export class TmdbService {
       id: episode.id,
       name: episode.name,
       overview: episode.overview,
+
       episodeNumber:
         episode.episode_number,
+
       seasonNumber:
         episode.season_number,
-      airDate: episode.air_date,
-      runtime: episode.runtime,
+
+      airDate:
+        episode.air_date,
+
+      runtime:
+        episode.runtime,
+
       stillPath:
         episode.still_path,
+
       voteAverage:
         episode.vote_average,
+
       voteCount:
         episode.vote_count,
     };
@@ -557,6 +838,7 @@ export class TmdbService {
   ): TmdbSearchResponse {
     return {
       page: response.page,
+
       results: response.results.map(
         (result) => {
           if (
@@ -566,27 +848,36 @@ export class TmdbService {
             return {
               id: result.id,
               mediaType: 'movie',
+
               title: result.title,
+
               originalTitle:
                 result.original_title,
+
               overview:
                 result.overview,
+
               posterPath:
                 result.poster_path,
+
               posterUrl:
                 getTmdbImageUrl(
                   result.poster_path,
                   'w500',
                 ),
+
               backdropPath:
                 result.backdrop_path,
+
               backdropUrl:
                 getTmdbImageUrl(
                   result.backdrop_path,
                   'w1280',
                 ),
+
               releaseDate:
                 result.release_date,
+
               voteAverage:
                 result.vote_average,
             };
@@ -599,27 +890,36 @@ export class TmdbService {
             return {
               id: result.id,
               mediaType: 'tv',
+
               name: result.name,
+
               originalName:
                 result.original_name,
+
               overview:
                 result.overview,
+
               posterPath:
                 result.poster_path,
+
               posterUrl:
                 getTmdbImageUrl(
                   result.poster_path,
                   'w500',
                 ),
+
               backdropPath:
                 result.backdrop_path,
+
               backdropUrl:
                 getTmdbImageUrl(
                   result.backdrop_path,
                   'w1280',
                 ),
+
               firstAirDate:
                 result.first_air_date,
+
               voteAverage:
                 result.vote_average,
             };
@@ -628,16 +928,21 @@ export class TmdbService {
           return {
             id: result.id,
             mediaType: 'person',
+
             name: result.name,
+
             profilePath:
               result.profile_path,
+
             knownForDepartment:
               result.known_for_department,
           };
         },
       ),
+
       totalPages:
         response.total_pages,
+
       totalResults:
         response.total_results,
     };

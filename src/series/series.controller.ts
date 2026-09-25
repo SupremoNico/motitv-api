@@ -14,6 +14,22 @@ export class SeriesController {
         private readonly seriesService: SeriesService,
     ) { }
 
+    @Get()
+    getSeries(
+        @Query('page') page?: string,
+        @Query('genre') genre?: string,
+    ) {
+        return this.seriesService.getSeries(
+            this.parsePage(page),
+            this.parseGenre(genre),
+        );
+    }
+
+    @Get('genres')
+    getGenres() {
+        return this.seriesService.getGenres();
+    }
+
     @Get('popular')
     getPopular(@Query('page') page?: string) {
         return this.seriesService.getPopular(
@@ -78,10 +94,10 @@ export class SeriesController {
     }
 
     @Get(':id')
-    getSeries(
+    getSeriesById(
         @Param('id', ParseIntPipe) id: number,
     ) {
-        return this.seriesService.getSeries(id);
+        return this.seriesService.getSeriesById(id);
     }
 
     private parsePage(page?: string): number {
@@ -89,6 +105,22 @@ export class SeriesController {
 
         if (!Number.isInteger(parsed) || parsed < 1) {
             return 1;
+        }
+
+        return parsed;
+    }
+
+    private parseGenre(
+        genre?: string,
+    ): number | undefined {
+        if (!genre) {
+            return undefined;
+        }
+
+        const parsed = Number(genre);
+
+        if (!Number.isInteger(parsed) || parsed < 1) {
+            return undefined;
         }
 
         return parsed;

@@ -8,6 +8,20 @@ export class MoviesService {
         private readonly tmdbService: TmdbService,
     ) { }
 
+    async getMovies(
+        page = 1,
+        genreId?: number,
+    ) {
+        return this.tmdbService.getMovies(
+            page,
+            genreId,
+        );
+    }
+
+    async getGenres() {
+        return this.tmdbService.getMovieGenres();
+    }
+
     async getMovie(id: number) {
         return this.tmdbService.getMovie(id);
     }
@@ -31,7 +45,9 @@ export class MoviesService {
     }
 
     async getPopular(page = 1) {
-        return this.tmdbService.getPopularMovies(page);
+        return this.tmdbService.getPopularMovies(
+            page,
+        );
     }
 
     async getNowPlaying(page = 1) {
